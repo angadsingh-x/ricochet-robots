@@ -4,7 +4,7 @@ import { placeRobotsRandomly, slideRobot, isSolved } from '../game/robot';
 import { solve } from '../game/solver';
 import { BoardRenderer } from '../renderer/canvas';
 import {
-  Direction, Position, RobotColor, RobotPositions, Target, Move,
+  Direction, RobotColor, RobotPositions, Target, Move,
   NORTH, EAST, SOUTH, WEST, ROBOT_COLORS,
 } from '../game/types';
 
@@ -162,10 +162,6 @@ export class SoloGame {
     requestAnimationFrame(animLoop);
   }
 
-  hasRobotAt(row: number, col: number): boolean {
-    return ROBOT_COLORS.some(c => this.robots[c].row === row && this.robots[c].col === col);
-  }
-
   selectRobotAt(row: number, col: number) {
     for (const color of ROBOT_COLORS) {
       if (this.robots[color].row === row && this.robots[color].col === col) {
@@ -251,45 +247,49 @@ export class SoloGame {
       }
     });
 
-    // Mouse click: select robot or tap-to-move
+    // Mouse click to select robot
     this.canvas.addEventListener('click', (e) => {
       const rect = this.canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       const cell = this.getCellFromPixel(x, y);
-      if (!cell) return;
-
-      // Check if tapped cell has a robot → select it
-      if (this.hasRobotAt(cell.row, cell.col)) {
+      if (cell) {
         this.selectRobotAt(cell.row, cell.col);
-        return;
-      }
-
-      // Otherwise, move selected robot toward tapped cell
-      if (this.selectedRobot) {
-        const dir = getDirectionFromTap(this.robots[this.selectedRobot], cell);
-        if (dir !== null) this.moveRobot(dir);
       }
     });
 
-    // Touch: tap-to-select or tap-to-move (same logic as click)
-    this.canvas.addEventListener('touchend', (e) => {
-      e.preventDefault(); // prevent click from also firing
-      const touch = e.changedTouches[0];
-      const rect = this.canvas.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-      const y = touch.clientY - rect.top;
-      const cell = this.getCellFromPixel(x, y);
-      if (!cell) return;
+    // Touch swipe to move
+    let touchStartX = 0;
+    let touchStartY = 0;
 
-      if (this.hasRobotAt(cell.row, cell.col)) {
-        this.selectRobotAt(cell.row, cell.col);
+    this.canvas.addEventListener('touchstart', (e) => {
+      const touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+    }, { passive: true });
+
+    this.canvas.addEventListener('touchend', (e) => {
+      const touch = e.changedTouches[0];
+      const dx = touch.clientX - touchStartX;
+      const dy = touch.clientY - touchStartY;
+      const minSwipe = 30;
+
+      if (Math.abs(dx) < minSwipe && Math.abs(dy) < minSwipe) {
+        // Tap — select robot
+        const rect = this.canvas.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        const cell = this.getCellFromPixel(x, y);
+        if (cell) {
+          this.selectRobotAt(cell.row, cell.col);
+        }
         return;
       }
 
-      if (this.selectedRobot) {
-        const dir = getDirectionFromTap(this.robots[this.selectedRobot], cell);
-        if (dir !== null) this.moveRobot(dir);
+      if (Math.abs(dx) > Math.abs(dy)) {
+        this.moveRobot(dx > 0 ? EAST : WEST);
+      } else {
+        this.moveRobot(dy > 0 ? SOUTH : NORTH);
       }
     });
   }
@@ -302,17 +302,6 @@ function cloneRobots(robots: RobotPositions): RobotPositions {
     green: { ...robots.green },
     yellow: { ...robots.yellow },
   };
-}
-
-function getDirectionFromTap(robotPos: Position, tapPos: Position): Direction | null {
-  const dr = tapPos.row - robotPos.row;
-  const dc = tapPos.col - robotPos.col;
-  if (dr === 0 && dc === 0) return null;
-  if (Math.abs(dc) >= Math.abs(dr)) {
-    return dc > 0 ? EAST : WEST;
-  } else {
-    return dr > 0 ? SOUTH : NORTH;
-  }
 }
 
 function shuffleArray<T>(arr: T[]) {

@@ -300,7 +300,7 @@ function renderMultiplayer() {
         <button class="btn btn-ghost btn-small" id="mp-fail">Give Up</button>
       </div>
 
-      <div class="d-pad d-pad-hidden" id="d-pad">
+      <div class="d-pad" id="d-pad" style="display:none;">
         <button class="d-pad-up">&#9650;</button>
         <button class="d-pad-left">&#9668;</button>
         <button class="d-pad-center"></button>
@@ -356,7 +356,7 @@ function updateMultiplayerUI() {
   switch (mpGame.phase) {
     case 'thinking': {
       controlsEl.style.display = 'none';
-      dpadEl.classList.add('d-pad-hidden');
+      dpadEl.style.display = 'none';
       const warn = mpGame.thinkingTimeLeft <= 10 ? ' warning' : '';
       phaseArea.innerHTML = `
         <div class="phase-banner">
@@ -371,7 +371,7 @@ function updateMultiplayerUI() {
 
     case 'bidding': {
       controlsEl.style.display = 'none';
-      dpadEl.classList.add('d-pad-hidden');
+      dpadEl.style.display = 'none';
       phaseArea.innerHTML = `
         <div class="phase-banner">
           <p style="margin-bottom:0.75rem;">How many moves can you do it in?</p>
@@ -411,7 +411,7 @@ function updateMultiplayerUI() {
 
     case 'solving': {
       controlsEl.style.display = 'flex';
-      dpadEl.classList.remove('d-pad-hidden');
+      dpadEl.style.display = 'grid';
       const solver = mpGame.getCurrentSolver();
       const maxMoves = mpGame.getCurrentSolverMaxMoves();
       phaseArea.innerHTML = `
@@ -428,14 +428,14 @@ function updateMultiplayerUI() {
           </div>
         `;
         controlsEl.style.display = 'none';
-        dpadEl.classList.add('d-pad-hidden');
+        dpadEl.style.display = 'none';
       }
       break;
     }
 
     case 'round_end': {
       controlsEl.style.display = 'none';
-      dpadEl.classList.add('d-pad-hidden');
+      dpadEl.style.display = 'none';
 
       if (mpGame.isGameOver()) {
         const winner = mpGame.players.reduce((a, b) => a.score > b.score ? a : b);
