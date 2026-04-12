@@ -257,6 +257,7 @@ export class MultiplayerGame {
   private replaySolution(solution: Move[], index: number) {
     if (index >= solution.length) {
       this.showingSolution = false;
+      this.redraw();
       this.onUpdate();
       return;
     }
