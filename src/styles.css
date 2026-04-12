@@ -137,6 +137,42 @@ body {
   cursor: pointer;
 }
 
+/* How to play */
+.how-to-play {
+  width: 100%;
+  max-width: 320px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding-top: 1.25rem;
+}
+
+.how-to-play-title {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #4a5568;
+  margin-bottom: 0.6rem;
+}
+
+.how-to-play ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.how-to-play li {
+  font-size: 0.85rem;
+  color: #718096;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.how-to-play .arrow {
+  color: #4a5568;
+  flex-shrink: 0;
+}
+
 /* ===== Game Screen ===== */
 .game-screen {
   display: flex;

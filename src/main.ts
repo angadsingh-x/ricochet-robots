@@ -38,7 +38,16 @@ function renderMenu() {
         <button class="btn btn-primary" id="btn-solo">Solo Puzzle</button>
         <button class="btn btn-secondary" id="btn-mp">Local Multiplayer</button>
       </div>
-      <div class="keyboard-hints" style="margin-top: 2rem;">
+      <div class="how-to-play">
+        <p class="how-to-play-title">How to Play</p>
+        <ul>
+          <li><span class="arrow">→</span> Slide the colored robot to its matching target</li>
+          <li><span class="arrow">→</span> Robots slide until hitting a wall or another robot</li>
+          <li><span class="arrow">→</span> Use other robots as blockers</li>
+          <li><span class="arrow">→</span> Fewer moves = better</li>
+        </ul>
+      </div>
+      <div class="keyboard-hints">
         <span><kbd>Arrow Keys</kbd> / <kbd>WASD</kbd> Move</span>
         <span><kbd>1-4</kbd> Select Robot</span>
         <span><kbd>U</kbd> Undo</span>
