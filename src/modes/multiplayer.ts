@@ -1,6 +1,7 @@
 import { Board } from '../game/board';
 import { randomBoardConfig } from '../game/boards-data';
 import { placeRobotsRandomly, slideRobot, isSolved } from '../game/robot';
+import { solve } from '../game/solver';
 import { BoardRenderer } from '../renderer/canvas';
 import {
   Direction, RobotColor, RobotPositions, Target, Move,
@@ -30,7 +31,11 @@ export class MultiplayerGame {
   thinkingTimeLeft = 0;
   round = 0;
   maxRounds: number;
+  lastRoundWasSolved = false;
+  showingSolution = false;
+  solutionOptimalMoves: number | null = null;
 
+  private failedRobotPositions: RobotPositions | null = null;
   private renderer: BoardRenderer;
   private canvas: HTMLCanvasElement;
   private onUpdate: () => void;
@@ -81,13 +86,17 @@ export class MultiplayerGame {
     }
 
     this.currentTarget = this.allTargets[this.targetIndex++];
-    this.initialRobots = cloneRobots(this.robots);
+    this.initialRobots = cloneRobots(this.failedRobotPositions ?? this.robots);
     this.moves = [];
     this.solved = false;
     this.selectedRobot = this.currentTarget.color;
     this.players.forEach(p => p.bid = null);
     this.bidQueue = [];
     this.currentSolverIndex = 0;
+    this.failedRobotPositions = null;
+    this.showingSolution = false;
+    this.solutionOptimalMoves = null;
+    this.lastRoundWasSolved = false;
 
     this.startThinking();
   }
@@ -213,10 +222,66 @@ export class MultiplayerGame {
 
   private endRound(winnerIndex: number | null) {
     this.phase = 'round_end';
+    this.lastRoundWasSolved = winnerIndex !== null;
     if (winnerIndex !== null) {
       this.players[winnerIndex].score++;
+    } else {
+      this.failedRobotPositions = cloneRobots(this.robots);
     }
     this.onUpdate();
+  }
+
+  showSolution() {
+    if (this.showingSolution || this.solutionOptimalMoves !== null) return;
+
+    const solution = solve(
+      this.board,
+      this.initialRobots,
+      this.currentTarget.color,
+      this.currentTarget.pos,
+    );
+
+    if (solution) {
+      this.solutionOptimalMoves = solution.length;
+      this.showingSolution = true;
+      this.robots = cloneRobots(this.initialRobots);
+      this.moves = [];
+      this.onUpdate();
+      this.replaySolution(solution, 0);
+    } else {
+      this.solutionOptimalMoves = -1;
+      this.onUpdate();
+    }
+  }
+
+  private replaySolution(solution: Move[], index: number) {
+    if (index >= solution.length) {
+      this.showingSolution = false;
+      this.redraw();
+      this.onUpdate();
+      return;
+    }
+
+    const move = solution[index];
+    this.selectedRobot = move.color;
+    this.animating = true;
+
+    this.renderer.animateMove(move.color, move.from, move.to, () => {
+      this.robots[move.color] = { ...move.to };
+      this.moves.push(move);
+      this.animating = false;
+      this.redraw();
+      this.onUpdate();
+      setTimeout(() => this.replaySolution(solution, index + 1), 300);
+    });
+
+    const animLoop = () => {
+      if (this.animating) {
+        this.redraw();
+        requestAnimationFrame(animLoop);
+      }
+    };
+    requestAnimationFrame(animLoop);
   }
 
   isGameOver(): boolean {
@@ -307,32 +372,6 @@ export class MultiplayerGame {
       if (cell) this.selectRobotAt(cell.row, cell.col);
     });
 
-    let touchStartX = 0, touchStartY = 0;
-
-    this.canvas.addEventListener('touchstart', (e) => {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-
-    this.canvas.addEventListener('touchend', (e) => {
-      const touch = e.changedTouches[0];
-      const dx = touch.clientX - touchStartX;
-      const dy = touch.clientY - touchStartY;
-
-      if (Math.abs(dx) < 30 && Math.abs(dy) < 30) {
-        const rect = this.canvas.getBoundingClientRect();
-        const cell = this.getCellFromPixel(touch.clientX - rect.left, touch.clientY - rect.top);
-        if (cell) this.selectRobotAt(cell.row, cell.col);
-        return;
-      }
-
-      if (this.phase !== 'solving') return;
-      if (Math.abs(dx) > Math.abs(dy)) {
-        this.moveRobot(dx > 0 ? EAST : WEST);
-      } else {
-        this.moveRobot(dy > 0 ? SOUTH : NORTH);
-      }
-    });
   }
 }
 

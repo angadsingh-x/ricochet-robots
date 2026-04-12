@@ -258,40 +258,6 @@ export class SoloGame {
       }
     });
 
-    // Touch swipe to move
-    let touchStartX = 0;
-    let touchStartY = 0;
-
-    this.canvas.addEventListener('touchstart', (e) => {
-      const touch = e.touches[0];
-      touchStartX = touch.clientX;
-      touchStartY = touch.clientY;
-    }, { passive: true });
-
-    this.canvas.addEventListener('touchend', (e) => {
-      const touch = e.changedTouches[0];
-      const dx = touch.clientX - touchStartX;
-      const dy = touch.clientY - touchStartY;
-      const minSwipe = 30;
-
-      if (Math.abs(dx) < minSwipe && Math.abs(dy) < minSwipe) {
-        // Tap — select robot
-        const rect = this.canvas.getBoundingClientRect();
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-        const cell = this.getCellFromPixel(x, y);
-        if (cell) {
-          this.selectRobotAt(cell.row, cell.col);
-        }
-        return;
-      }
-
-      if (Math.abs(dx) > Math.abs(dy)) {
-        this.moveRobot(dx > 0 ? EAST : WEST);
-      } else {
-        this.moveRobot(dy > 0 ? SOUTH : NORTH);
-      }
-    });
   }
 }
 

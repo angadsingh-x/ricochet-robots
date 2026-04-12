@@ -38,7 +38,16 @@ function renderMenu() {
         <button class="btn btn-primary" id="btn-solo">Solo Puzzle</button>
         <button class="btn btn-secondary" id="btn-mp">Local Multiplayer</button>
       </div>
-      <div class="keyboard-hints" style="margin-top: 2rem;">
+      <div class="how-to-play">
+        <p class="how-to-play-title">How to Play</p>
+        <ul>
+          <li><span class="arrow">→</span> Slide the colored robot to its matching target</li>
+          <li><span class="arrow">→</span> Robots slide horizontally or vertically until hitting a wall or another robot</li>
+          <li><span class="arrow">→</span> Use other robots as blockers</li>
+          <li><span class="arrow">→</span> Fewer moves = better</li>
+        </ul>
+      </div>
+      <div class="keyboard-hints">
         <span><kbd>Arrow Keys</kbd> / <kbd>WASD</kbd> Move</span>
         <span><kbd>1-4</kbd> Select Robot</span>
         <span><kbd>U</kbd> Undo</span>
@@ -83,13 +92,6 @@ function renderSolo() {
 
       <div id="solved-area"></div>
 
-      <div class="game-controls">
-        <button class="btn btn-ghost btn-small" id="btn-undo">Undo (U)</button>
-        <button class="btn btn-ghost btn-small" id="btn-reset">Reset (R)</button>
-        <button class="btn btn-ghost btn-small" id="btn-solve">Show Solution</button>
-        <button class="btn btn-primary btn-small" id="btn-next">Next Puzzle</button>
-      </div>
-
       <div class="d-pad" id="d-pad">
         <button class="d-pad-up">&#9650;</button>
         <button class="d-pad-left">&#9668;</button>
@@ -98,13 +100,19 @@ function renderSolo() {
         <button class="d-pad-down">&#9660;</button>
       </div>
 
+      <div class="game-controls">
+        <button class="btn btn-ghost btn-small" id="btn-undo">Undo (U)</button>
+        <button class="btn btn-ghost btn-small" id="btn-reset">Reset (R)</button>
+        <button class="btn btn-ghost btn-small" id="btn-solve">Show Solution</button>
+        <button class="btn btn-primary btn-small" id="btn-next">Next Puzzle</button>
+      </div>
+
       <div class="keyboard-hints">
         <span><kbd>Arrow Keys</kbd> / <kbd>WASD</kbd> Move</span>
         <span><kbd>1-4</kbd> Select Robot</span>
         <span><kbd>U</kbd> Undo</span>
         <span><kbd>R</kbd> Reset</span>
         <span>Click robot to select</span>
-        <span>Swipe on mobile</span>
       </div>
     </div>
   `;
@@ -449,15 +457,39 @@ function updateMultiplayerUI() {
           mpGame?.newGame();
         });
       } else {
-        phaseArea.innerHTML = `
-          <div class="phase-banner">
-            <p>Round ${mpGame.round} complete!</p>
-            <button class="btn btn-primary btn-small" id="btn-next-round" style="margin-top:0.5rem;">
-              Next Round
-            </button>
-          </div>
+        const roundMsg = mpGame.lastRoundWasSolved
+          ? `Round ${mpGame.round} complete!`
+          : `Round ${mpGame.round} complete! Nobody solved it.`;
+
+        let bannerContent = `<p>${roundMsg}</p>`;
+
+        if (!mpGame.lastRoundWasSolved) {
+          if (mpGame.showingSolution) {
+            bannerContent += `<p><em>Showing solution...</em></p>`;
+          } else if (mpGame.solutionOptimalMoves === -1) {
+            bannerContent += `<p><em>No solution found within search depth.</em></p>`;
+          } else if (mpGame.solutionOptimalMoves !== null) {
+            bannerContent += `<p><em>Solution: ${mpGame.solutionOptimalMoves} move(s).</em></p>`;
+          } else {
+            bannerContent += `<button class="btn btn-secondary btn-small" id="btn-show-mp-solution" style="margin-top:0.5rem;">Show Solution</button>`;
+          }
+        }
+
+        const nextRoundDisabled = mpGame.showingSolution ? 'disabled' : '';
+        bannerContent += `
+          <button class="btn btn-primary btn-small" id="btn-next-round" style="margin-top:0.5rem;" ${nextRoundDisabled}>
+            Next Round
+          </button>
         `;
-        document.getElementById('btn-next-round')!.onclick = () => mpGame?.nextRound();
+
+        phaseArea.innerHTML = `<div class="phase-banner">${bannerContent}</div>`;
+
+        document.getElementById('btn-show-mp-solution')?.addEventListener('click', () => {
+          mpGame?.showSolution();
+        });
+        if (!mpGame.showingSolution) {
+          document.getElementById('btn-next-round')!.onclick = () => mpGame?.nextRound();
+        }
       }
       break;
     }

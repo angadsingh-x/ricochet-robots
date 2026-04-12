@@ -2,7 +2,7 @@
 
 A browser-based version of the classic [Ricochet Robots](https://en.wikipedia.org/wiki/Ricochet_Robots) board game by Alex Randolph. Play solo puzzles or compete with friends on the same device.
 
-**[Play Now](https://angadsingh-x.github.io/ricochet-robots/)**
+**[Play Now](https://angadsingh-x.github.io/ricochet-robots/)** | **[Staging](https://angadsingh-x.github.io/ricochet-robots/staging/)**
 
 ![Menu](screenshots/01-menu.png)
 
@@ -30,7 +30,6 @@ The twist: robots slide in a straight line until they hit a wall or another robo
 |-------|--------|
 | **Click/tap** a robot | Select it |
 | **Arrow keys** or **WASD** | Slide selected robot in that direction |
-| **Swipe** (mobile) | Slide selected robot in swipe direction |
 | **1-4** keys | Quick-select robot (1=red, 2=blue, 3=green, 4=yellow) |
 | **U** | Undo last move |
 | **R** | Reset puzzle to starting positions |
@@ -98,9 +97,61 @@ npm run dev
 # Build for production
 npm run build
 
-# Deploy to GitHub Pages
+# Deploy to staging (test before going live)
+npm run deploy:staging
+
+# Deploy to production (GitHub Pages)
 npm run deploy
 ```
+
+## Deployment
+
+The game is hosted on **GitHub Pages**. There are two environments: staging (for testing) and production (live).
+
+### Prerequisites
+
+Dependencies must be installed before any build or deploy:
+
+```bash
+npm install
+```
+
+If `npm run build` fails with a `Cannot find type definition file for 'vite/client'` error, this is the fix — `node_modules` was missing.
+
+### Staging
+
+Staging lives at `https://angadsingh-x.github.io/ricochet-robots/staging/` and is used to verify changes before they go live.
+
+```bash
+npm run deploy:staging
+```
+
+This runs `tsc` (type-check) + `vite build --base=/ricochet-robots/staging/` + `gh-pages -d dist -e staging`, pushing the built `dist/` folder to the `staging/` subdirectory of the `gh-pages` branch.
+
+### Production
+
+Once staging looks good, deploy to production:
+
+```bash
+npm run deploy
+```
+
+This runs the same build without a custom base path and pushes to the root of the `gh-pages` branch. Production is at `https://angadsingh-x.github.io/ricochet-robots/`.
+
+### Keeping the Same Hash (Staging → Production)
+
+Vite generates content-hashed filenames (e.g. `index-CY-oa6CJ.js`). When you run `deploy:staging` and then `deploy` **without changing any source files**, Vite produces the same hash for production as it did for staging. This means:
+
+- The exact same JS bundle that was tested in staging goes to production
+- No risk of a "works in staging, breaks in prod" scenario from a stale rebuild
+
+If you change source files between the two deploys, the hash will differ — which is expected and safe.
+
+### Cache Busting
+
+GitHub Pages CDN treats content-hashed JS filenames as immutable and caches them aggressively. If you deploy a fix but the filename stays the same (e.g. because the minified output happened to be identical), browsers and the CDN will keep serving the old file.
+
+To force a new hash, make any trivial source change (e.g. add or remove a comment) before redeploying. The new filename will bypass all caches.
 
 ## Credits
 
