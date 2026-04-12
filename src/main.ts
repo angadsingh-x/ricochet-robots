@@ -42,7 +42,7 @@ function renderMenu() {
         <p class="how-to-play-title">How to Play</p>
         <ul>
           <li><span class="arrow">→</span> Slide the colored robot to its matching target</li>
-          <li><span class="arrow">→</span> Robots slide until hitting a wall or another robot</li>
+          <li><span class="arrow">→</span> Robots slide horizontally or vertically until hitting a wall or another robot</li>
           <li><span class="arrow">→</span> Use other robots as blockers</li>
           <li><span class="arrow">→</span> Fewer moves = better</li>
         </ul>
