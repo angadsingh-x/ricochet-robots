@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && gh-pages -d dist",
+    "deploy": "npm run build && gh-pages -d dist --add",
     "deploy:staging": "tsc && vite build --base=/ricochet-robots/staging/ && gh-pages -d dist -e staging"
   },
   "devDependencies": {
