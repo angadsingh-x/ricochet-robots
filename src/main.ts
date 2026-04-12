@@ -83,13 +83,6 @@ function renderSolo() {
 
       <div id="solved-area"></div>
 
-      <div class="game-controls">
-        <button class="btn btn-ghost btn-small" id="btn-undo">Undo (U)</button>
-        <button class="btn btn-ghost btn-small" id="btn-reset">Reset (R)</button>
-        <button class="btn btn-ghost btn-small" id="btn-solve">Show Solution</button>
-        <button class="btn btn-primary btn-small" id="btn-next">Next Puzzle</button>
-      </div>
-
       <div class="d-pad" id="d-pad">
         <button class="d-pad-up">&#9650;</button>
         <button class="d-pad-left">&#9668;</button>
@@ -98,13 +91,19 @@ function renderSolo() {
         <button class="d-pad-down">&#9660;</button>
       </div>
 
+      <div class="game-controls">
+        <button class="btn btn-ghost btn-small" id="btn-undo">Undo (U)</button>
+        <button class="btn btn-ghost btn-small" id="btn-reset">Reset (R)</button>
+        <button class="btn btn-ghost btn-small" id="btn-solve">Show Solution</button>
+        <button class="btn btn-primary btn-small" id="btn-next">Next Puzzle</button>
+      </div>
+
       <div class="keyboard-hints">
         <span><kbd>Arrow Keys</kbd> / <kbd>WASD</kbd> Move</span>
         <span><kbd>1-4</kbd> Select Robot</span>
         <span><kbd>U</kbd> Undo</span>
         <span><kbd>R</kbd> Reset</span>
         <span>Click robot to select</span>
-        <span>Swipe on mobile</span>
       </div>
     </div>
   `;
