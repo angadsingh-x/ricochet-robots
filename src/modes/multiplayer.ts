@@ -307,32 +307,6 @@ export class MultiplayerGame {
       if (cell) this.selectRobotAt(cell.row, cell.col);
     });
 
-    let touchStartX = 0, touchStartY = 0;
-
-    this.canvas.addEventListener('touchstart', (e) => {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-
-    this.canvas.addEventListener('touchend', (e) => {
-      const touch = e.changedTouches[0];
-      const dx = touch.clientX - touchStartX;
-      const dy = touch.clientY - touchStartY;
-
-      if (Math.abs(dx) < 30 && Math.abs(dy) < 30) {
-        const rect = this.canvas.getBoundingClientRect();
-        const cell = this.getCellFromPixel(touch.clientX - rect.left, touch.clientY - rect.top);
-        if (cell) this.selectRobotAt(cell.row, cell.col);
-        return;
-      }
-
-      if (this.phase !== 'solving') return;
-      if (Math.abs(dx) > Math.abs(dy)) {
-        this.moveRobot(dx > 0 ? EAST : WEST);
-      } else {
-        this.moveRobot(dy > 0 ? SOUTH : NORTH);
-      }
-    });
   }
 }
 
