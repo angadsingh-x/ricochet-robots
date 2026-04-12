@@ -86,7 +86,7 @@ export class MultiplayerGame {
     }
 
     this.currentTarget = this.allTargets[this.targetIndex++];
-    this.initialRobots = cloneRobots(this.robots);
+    this.initialRobots = cloneRobots(this.failedRobotPositions ?? this.robots);
     this.moves = [];
     this.solved = false;
     this.selectedRobot = this.currentTarget.color;
@@ -257,11 +257,6 @@ export class MultiplayerGame {
   private replaySolution(solution: Move[], index: number) {
     if (index >= solution.length) {
       this.showingSolution = false;
-      if (this.failedRobotPositions) {
-        this.robots = cloneRobots(this.failedRobotPositions);
-        this.moves = [];
-        this.redraw();
-      }
       this.onUpdate();
       return;
     }
