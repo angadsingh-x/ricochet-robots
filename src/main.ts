@@ -449,15 +449,39 @@ function updateMultiplayerUI() {
           mpGame?.newGame();
         });
       } else {
-        phaseArea.innerHTML = `
-          <div class="phase-banner">
-            <p>Round ${mpGame.round} complete!</p>
-            <button class="btn btn-primary btn-small" id="btn-next-round" style="margin-top:0.5rem;">
-              Next Round
-            </button>
-          </div>
+        const roundMsg = mpGame.lastRoundWasSolved
+          ? `Round ${mpGame.round} complete!`
+          : `Round ${mpGame.round} complete! Nobody solved it.`;
+
+        let bannerContent = `<p>${roundMsg}</p>`;
+
+        if (!mpGame.lastRoundWasSolved) {
+          if (mpGame.showingSolution) {
+            bannerContent += `<p><em>Showing solution...</em></p>`;
+          } else if (mpGame.solutionOptimalMoves === -1) {
+            bannerContent += `<p><em>No solution found within search depth.</em></p>`;
+          } else if (mpGame.solutionOptimalMoves !== null) {
+            bannerContent += `<p><em>Solution: ${mpGame.solutionOptimalMoves} move(s).</em></p>`;
+          } else {
+            bannerContent += `<button class="btn btn-secondary btn-small" id="btn-show-mp-solution" style="margin-top:0.5rem;">Show Solution</button>`;
+          }
+        }
+
+        const nextRoundDisabled = mpGame.showingSolution ? 'disabled' : '';
+        bannerContent += `
+          <button class="btn btn-primary btn-small" id="btn-next-round" style="margin-top:0.5rem;" ${nextRoundDisabled}>
+            Next Round
+          </button>
         `;
-        document.getElementById('btn-next-round')!.onclick = () => mpGame?.nextRound();
+
+        phaseArea.innerHTML = `<div class="phase-banner">${bannerContent}</div>`;
+
+        document.getElementById('btn-show-mp-solution')?.addEventListener('click', () => {
+          mpGame?.showSolution();
+        });
+        if (!mpGame.showingSolution) {
+          document.getElementById('btn-next-round')!.onclick = () => mpGame?.nextRound();
+        }
       }
       break;
     }
