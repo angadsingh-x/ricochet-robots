@@ -2,7 +2,7 @@
 
 A browser-based version of the classic [Ricochet Robots](https://en.wikipedia.org/wiki/Ricochet_Robots) board game by Alex Randolph. Play solo puzzles or compete with friends on the same device.
 
-**[Play Now](https://angadsingh-x.github.io/ricochet-robots/)**
+**[Play Now](https://angadsingh-x.github.io/ricochet-robots/)** | **[Staging](https://angadsingh-x.github.io/ricochet-robots/staging/)**
 
 ![Menu](screenshots/01-menu.png)
 
@@ -30,7 +30,6 @@ The twist: robots slide in a straight line until they hit a wall or another robo
 |-------|--------|
 | **Click/tap** a robot | Select it |
 | **Arrow keys** or **WASD** | Slide selected robot in that direction |
-| **Swipe** (mobile) | Slide selected robot in swipe direction |
 | **1-4** keys | Quick-select robot (1=red, 2=blue, 3=green, 4=yellow) |
 | **U** | Undo last move |
 | **R** | Reset puzzle to starting positions |
@@ -98,7 +97,10 @@ npm run dev
 # Build for production
 npm run build
 
-# Deploy to GitHub Pages
+# Deploy to staging (test before going live)
+npm run deploy:staging
+
+# Deploy to production (GitHub Pages)
 npm run deploy
 ```
 
