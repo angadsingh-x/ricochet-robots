@@ -1,6 +1,7 @@
 import { Board } from '../game/board';
 import { randomBoardConfig } from '../game/boards-data';
 import { placeRobotsRandomly, slideRobot, isSolved } from '../game/robot';
+import { solve } from '../game/solver';
 import { BoardRenderer } from '../renderer/canvas';
 import {
   Direction, RobotColor, RobotPositions, Target, Move,
@@ -30,7 +31,11 @@ export class MultiplayerGame {
   thinkingTimeLeft = 0;
   round = 0;
   maxRounds: number;
+  lastRoundWasSolved = false;
+  showingSolution = false;
+  solutionOptimalMoves: number | null = null;
 
+  private failedRobotPositions: RobotPositions | null = null;
   private renderer: BoardRenderer;
   private canvas: HTMLCanvasElement;
   private onUpdate: () => void;
@@ -88,6 +93,10 @@ export class MultiplayerGame {
     this.players.forEach(p => p.bid = null);
     this.bidQueue = [];
     this.currentSolverIndex = 0;
+    this.failedRobotPositions = null;
+    this.showingSolution = false;
+    this.solutionOptimalMoves = null;
+    this.lastRoundWasSolved = false;
 
     this.startThinking();
   }
@@ -213,10 +222,70 @@ export class MultiplayerGame {
 
   private endRound(winnerIndex: number | null) {
     this.phase = 'round_end';
+    this.lastRoundWasSolved = winnerIndex !== null;
     if (winnerIndex !== null) {
       this.players[winnerIndex].score++;
+    } else {
+      this.failedRobotPositions = cloneRobots(this.robots);
     }
     this.onUpdate();
+  }
+
+  showSolution() {
+    if (this.showingSolution || this.solutionOptimalMoves !== null) return;
+
+    const solution = solve(
+      this.board,
+      this.initialRobots,
+      this.currentTarget.color,
+      this.currentTarget.pos,
+    );
+
+    if (solution) {
+      this.solutionOptimalMoves = solution.length;
+      this.showingSolution = true;
+      this.robots = cloneRobots(this.initialRobots);
+      this.moves = [];
+      this.onUpdate();
+      this.replaySolution(solution, 0);
+    } else {
+      this.solutionOptimalMoves = -1;
+      this.onUpdate();
+    }
+  }
+
+  private replaySolution(solution: Move[], index: number) {
+    if (index >= solution.length) {
+      this.showingSolution = false;
+      if (this.failedRobotPositions) {
+        this.robots = cloneRobots(this.failedRobotPositions);
+        this.moves = [];
+        this.redraw();
+      }
+      this.onUpdate();
+      return;
+    }
+
+    const move = solution[index];
+    this.selectedRobot = move.color;
+    this.animating = true;
+
+    this.renderer.animateMove(move.color, move.from, move.to, () => {
+      this.robots[move.color] = { ...move.to };
+      this.moves.push(move);
+      this.animating = false;
+      this.redraw();
+      this.onUpdate();
+      setTimeout(() => this.replaySolution(solution, index + 1), 300);
+    });
+
+    const animLoop = () => {
+      if (this.animating) {
+        this.redraw();
+        requestAnimationFrame(animLoop);
+      }
+    };
+    requestAnimationFrame(animLoop);
   }
 
   isGameOver(): boolean {
