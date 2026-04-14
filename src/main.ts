@@ -2,12 +2,19 @@ import './styles.css';
 import { SoloGame } from './modes/solo';
 import { MultiplayerGame } from './modes/multiplayer';
 import { RobotColor, NORTH, SOUTH, EAST, WEST } from './game/types';
+import { Analytics } from './analytics';
+
+const analytics = new Analytics();
 
 type Screen = 'menu' | 'solo' | 'multiplayer-setup' | 'multiplayer';
 
 let currentScreen: Screen = 'menu';
 let soloGame: SoloGame | null = null;
 let mpGame: MultiplayerGame | null = null;
+
+// Analytics state tracking
+let _prevSoloSolved = false;
+let _puzzleStartTime = 0;
 
 const app = document.getElementById('app')!;
 
@@ -37,6 +44,7 @@ function renderMenu() {
       <div class="menu-buttons">
         <button class="btn btn-primary" id="btn-solo">Solo Puzzle</button>
         <button class="btn btn-secondary" id="btn-mp">Local Multiplayer</button>
+        <button class="btn btn-ghost" id="btn-stats">My Stats</button>
       </div>
       <div class="how-to-play">
         <p class="how-to-play-title">How to Play</p>
@@ -56,13 +64,16 @@ function renderMenu() {
     </div>
   `;
   document.getElementById('btn-solo')!.onclick = () => {
+    analytics.track('mode_selected', { mode: 'solo' });
     currentScreen = 'solo';
     render();
   };
   document.getElementById('btn-mp')!.onclick = () => {
+    analytics.track('mode_selected', { mode: 'multiplayer' });
     currentScreen = 'multiplayer-setup';
     render();
   };
+  document.getElementById('btn-stats')!.onclick = () => renderStats();
 }
 
 // ===== Solo =====
@@ -121,6 +132,13 @@ function renderSolo() {
 
   soloGame = new SoloGame(canvas, updateSoloUI);
   soloGame.resize();
+  // Track initial puzzle load
+  _puzzleStartTime = Date.now();
+  _prevSoloSolved = false;
+  analytics.track('solo_puzzle_loaded', {
+    color: soloGame.currentTarget.color,
+    shape: soloGame.currentTarget.shape,
+  });
 
   // D-pad buttons
   const dpad = document.getElementById('d-pad')!;
@@ -134,10 +152,29 @@ function renderSolo() {
     currentScreen = 'menu';
     render();
   };
-  document.getElementById('btn-undo')!.onclick = () => soloGame?.undo();
-  document.getElementById('btn-reset')!.onclick = () => soloGame?.resetPuzzle();
-  document.getElementById('btn-solve')!.onclick = () => soloGame?.showSolution();
-  document.getElementById('btn-next')!.onclick = () => soloGame?.nextTarget();
+  document.getElementById('btn-undo')!.onclick = () => {
+    analytics.track('solo_undo_used');
+    soloGame?.undo();
+  };
+  document.getElementById('btn-reset')!.onclick = () => {
+    analytics.track('solo_puzzle_reset');
+    soloGame?.resetPuzzle();
+  };
+  document.getElementById('btn-solve')!.onclick = () => {
+    analytics.track('solo_solution_shown', { movesAtReveal: soloGame?.moves.length ?? 0 });
+    soloGame?.showSolution();
+  };
+  document.getElementById('btn-next')!.onclick = () => {
+    soloGame?.nextTarget();
+    _puzzleStartTime = Date.now();
+    _prevSoloSolved = false;
+    if (soloGame) {
+      analytics.track('solo_puzzle_loaded', {
+        color: soloGame.currentTarget.color,
+        shape: soloGame.currentTarget.shape,
+      });
+    }
+  };
 
   renderRobotSelector();
   updateSoloUI();
@@ -170,6 +207,16 @@ function renderRobotSelector() {
 
 function updateSoloUI() {
   if (!soloGame) return;
+
+  // Detect solve transition
+  if (soloGame.solved && !_prevSoloSolved) {
+    analytics.track('solo_puzzle_solved', {
+      moves: soloGame.moves.length,
+      optimalMoves: soloGame.optimalMoves ?? 0,
+      durationMs: Date.now() - _puzzleStartTime,
+    });
+  }
+  _prevSoloSolved = soloGame.solved;
 
   document.getElementById('move-count')!.textContent = String(soloGame.moves.length);
 
@@ -515,6 +562,67 @@ function updateMultiplayerUI() {
       </tbody>
     </table>
   `;
+}
+
+// ===== My Stats =====
+function renderStats() {
+  const s = analytics.getSummary();
+
+  const fmt = (n: number, decimals = 1) =>
+    n === 0 ? '—' : n.toFixed(decimals);
+
+  const pct = (n: number) =>
+    n === 0 ? '—' : `${Math.round(n * 100)}%`;
+
+  app.innerHTML = `
+    <div class="menu-screen">
+      <h1>My Stats</h1>
+
+      <div class="stats-grid">
+        <div class="stats-section">
+          <p class="stats-section-title">All Time</p>
+          <div class="stats-row"><span>Days Played</span><span>${s.daysPlayed || '—'}</span></div>
+          <div class="stats-row"><span>Puzzles Played</span><span>${s.puzzlesPlayed || '—'}</span></div>
+          <div class="stats-row"><span>Puzzles Solved</span><span>${s.puzzlesSolved || '—'}</span></div>
+          <div class="stats-row"><span>Solve Rate</span><span>${pct(s.solveRate)}</span></div>
+        </div>
+
+        <div class="stats-section">
+          <p class="stats-section-title">Efficiency</p>
+          <div class="stats-row"><span>Avg Moves to Solve</span><span>${fmt(s.averageMovesToSolve)}</span></div>
+          <div class="stats-row"><span>Best (fewest moves)</span><span>${s.bestMoveCount || '—'}</span></div>
+          <div class="stats-row"><span>Avg Efficiency</span><span>${s.averageEfficiency === 0 ? '—' : fmt(s.averageEfficiency) + '× optimal'}</span></div>
+        </div>
+
+        <div class="stats-section">
+          <p class="stats-section-title">Habits</p>
+          <div class="stats-row"><span>Gave Up (solutions shown)</span><span>${pct(s.solutionRevealRate)}</span></div>
+          <div class="stats-row"><span>Total Undos</span><span>${s.totalUndos || '—'}</span></div>
+          <div class="stats-row"><span>Total Resets</span><span>${s.totalResets || '—'}</span></div>
+        </div>
+
+        <div class="stats-section">
+          <p class="stats-section-title">This Session</p>
+          <div class="stats-row"><span>Puzzles Played</span><span>${s.puzzlesThisSession || '—'}</span></div>
+          <div class="stats-row"><span>Puzzles Solved</span><span>${s.solvedThisSession || '—'}</span></div>
+        </div>
+      </div>
+
+      <div class="menu-buttons" style="margin-top:1.5rem;">
+        <button class="btn btn-ghost" id="btn-stats-back">Back</button>
+        <button class="btn btn-ghost stats-clear-btn" id="btn-stats-clear">Clear Stats</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('btn-stats-back')!.onclick = () => {
+    currentScreen = 'menu';
+    render();
+  };
+  document.getElementById('btn-stats-clear')!.onclick = () => {
+    analytics.clear();
+    renderStats(); // re-render with zeroed stats
+  };
 }
 
 function getColorHex(color: RobotColor): string {
