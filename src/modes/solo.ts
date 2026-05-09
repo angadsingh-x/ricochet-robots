@@ -244,6 +244,14 @@ export class SoloGame {
           this.redraw();
           this.onUpdate();
           break;
+        case 'Tab': {
+          e.preventDefault();
+          const idx = ROBOT_COLORS.indexOf(this.selectedRobot ?? 'red');
+          this.selectedRobot = ROBOT_COLORS[(idx + 1) % ROBOT_COLORS.length];
+          this.redraw();
+          this.onUpdate();
+          break;
+        }
       }
     });
 

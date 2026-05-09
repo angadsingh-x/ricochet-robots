@@ -361,6 +361,13 @@ export class MultiplayerGame {
         case '2': this.selectedRobot = 'blue'; this.redraw(); this.onUpdate(); break;
         case '3': this.selectedRobot = 'green'; this.redraw(); this.onUpdate(); break;
         case '4': this.selectedRobot = 'yellow'; this.redraw(); this.onUpdate(); break;
+        case 'Tab': {
+          e.preventDefault();
+          const idx = ROBOT_COLORS.indexOf(this.selectedRobot ?? 'red');
+          this.selectedRobot = ROBOT_COLORS[(idx + 1) % ROBOT_COLORS.length];
+          this.redraw(); this.onUpdate();
+          break;
+        }
       }
     });
 
