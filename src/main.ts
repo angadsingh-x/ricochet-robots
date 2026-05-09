@@ -49,7 +49,7 @@ function renderMenu() {
       </div>
       <div class="keyboard-hints">
         <span><kbd>Arrow Keys</kbd> / <kbd>WASD</kbd> Move</span>
-        <span><kbd>1-4</kbd> Select Robot</span>
+        <span><kbd>1-4</kbd> / <kbd>Tab</kbd> Select Robot</span>
         <span><kbd>U</kbd> Undo</span>
         <span><kbd>R</kbd> Reset</span>
       </div>
